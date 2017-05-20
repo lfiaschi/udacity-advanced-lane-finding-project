@@ -111,13 +111,48 @@ The result for this step on the test images are
 ![alt text][image4]
 
 
+#### 5. Radius of curvature and car positioning:
+
+Radius of curvature and car positioning are estimated in the functions `find_curvature` and `find_position`:
+
+```python
+    def find_curvature(yvals, fitx ):
+        # Define y-value where we want radius of curvature
+        # I'll choose the maximum y-value, corresponding to the bottom of the image
+        y_eval = np.max(yvals)
+        # Define conversions in x and y from pixels space to meters
+        ym_per_pix = 30/720 # meters per pixel in y dimension
+        xm_per_pix = 3.7/700 # meteres per pixel in x dimension
+        fit_cr = np.polyfit(yvals*ym_per_pix, fitx*xm_per_pix, 2)
+        curverad = ((1 + (2*fit_cr[0]*y_eval + fit_cr[1])**2)**1.5) \
+                                     /np.absolute(2*fit_cr[0])
+        return curverad
+
+    def find_position(pts, image_shape = (720, 1280)):
+        # Find the position of the car from the center
+        # It will show if the car is 'x' meters from the left or right
+
+        position = image_shape[1]/2
+        left  = np.min(pts[(pts[:,1] < position) & (pts[:,0] > 700)][:,1])
+        right = np.max(pts[(pts[:,1] > position) & (pts[:,0] > 700)][:,1])
+        center = (left + right)/2
+        # Define conversions in x and y from pixels space to meters
+        xm_per_pix = 3.7/700 # meters per pixel in x dimension
+        return (position - center)*xm_per_pix
+```
+
 ---
 
 ## Discussion
 
-The particular challenge in this video is to detect the right lane, since it is a striped line, while the left lane is more or less detected accurately.
-As a result the right lane appears to wiggle much more than the left one and sometimes shows the wrong curvature.
+The particular challenge in this video is to detect the right lane, since it is a striped line, while the left lane 
+is more or less detected accurately. As a result the right lane appears to wiggle much more than the left one and sometimes shows the wrong curvature.
 For this reason, I only used the left lane to calculate the curvature. 
+
 
 It should be possible to use the fact that the lanes must be parallel to ensure a more robust procedure when 
 fitting the lane polynomials, and use the left lane fit as a prior for the right lane.
+
+
+Finally, the segmentation procedure which is used here is not very robust in terms of lightning conditions and it is possible to use other techniques 
+such as neural newtworks to detect the pixels corresponding to image lanes in a more robust fashion.
