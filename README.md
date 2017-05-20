@@ -18,7 +18,7 @@ The code is organized as follows:
 - To camera parameters were produced with the notebook  `Camera Calibration.ipynb`  which saves a pickle `calibration.p` 
 with the fitted parameters
 - The code for the segmentation and lane fitting pipeline is organized in the library `carnd_lane_pipeline.py`. 
-  In this  library the class `LaneFinder` takes care of the fit and the image processing for each frame of the video.
+  In this  library the class `LaneFinder` takes care of image processing for each frame of the video in its main method process image.
 - The results of the project is the video `output.mp4` which can be obtained by running the ipython notebook `Project Submission.ipynb`
 
 
@@ -47,8 +47,9 @@ I then used the output `objpoints` and `imgpoints` to compute the camera calibra
 The image pipeline is applied in the notebook `Project Submission.ipynb` and the function `process_image` of the class `LaneFitter`
 
 #### 1. Undistort
-The first step of the lane finding pipeline is undistort the image using the fitted camera parameters.
-To this end the camera paramters (distortion matrix) where saved in a pickled file `calibration.p` and are applied
+The first step of the lane finding pipeline is to undistort the image using the fitted camera parameters.
+
+To this end, the camera paramters (distortion matrix) where saved in a pickled file `calibration.p` and are applied
 using the function `cv2.undistort`. The result on a test image is the following:
 
 
@@ -66,10 +67,10 @@ of the file `cardn_lane_pipeline.py`
 - S channels (from HSV color space) thresholds
 
 The parameters for these thresholds where either manually tuned on the test images or found reading blogs in the internet.
-It greately improved the results to include a preprocessing step where the initial images are filtered with Gaussian 
-of large sigme (1) in order to reduce noise in the produced binary segmentation. The binary segmentations the different 
-thresholds were combined using an `OR` operator. Finally combined segmentation was set to zero outside of a trapezoidal region of 
-interest in order to remove distracting objects.
+The result was greatly improved by including a preprocessing step where the raw images are filtered with Gaussian 
+of large sigma, in order to reduce noise in the produced binary segmentation. The binary segmentations (obtained by gradient and color) 
+were combined using an `OR` operator. Finally, the combined segmentation was set to zero outside of a trapezoidal region of 
+interest in order to remove distracting objects. The paramters for the trapezoidal region were take from here `https://github.com/wonjunee/Advanced-Lane-Finding/blob/master/Advanced-Lane-Finding-Submission.ipynb`.
 
 To demonstrate this step, here is the result of the segmentation of a test image:
 
@@ -98,13 +99,12 @@ The result of this transformation applied to the test images is the following
 I used the perspective transformed image to fit the lane lines using a polynomial fit of second order.
 This is inmplemetned in the function `_fit_lanes` of the class `LaneFinder`. 
 
-The assumption is that we need to find 2 lanes, and to this end we use a window approach to identify 2 set of anchor points.
-We scan the histogram of the binary image in windows to identify the anchor points and finally we fit a
-second order polinomial to them. In order to get a more robust fit I perform the scan three times with diferent paramters
-for the windows size and the average across the multiple points obtained.
+The assumption is that we need to find 2 lanes, and to this end we use a window approach to identify two sets of anchor points.
+To find the anchor points, we scan the histogram of the binary image in windows to identify its peaks, finally we fit a
+second order polynomial to these detected positions. 
 
-The code is organized into a class which remembers where the last fits for the lane lanes and smooth the fits across time
-implementing a quality check for the fit based on the curvature radius.
+In order to get a more robust fit, the code is organized into a class which remembers where the last 5 fits for the lane lanes 
+and average those fits across time. It also, implements a quality check for the fit based on the curvature radius.
 
 The result for this step on the test images are
 
@@ -113,31 +113,38 @@ The result for this step on the test images are
 
 #### 5. Radius of curvature and car positioning:
 
-Radius of curvature and car positioning are estimated in the functions `find_curvature` and `find_position`, only the
+Radius of curvature and car positioning are estimated in the functions `get_curvature` and `get_position`, only the
 fit for the left lane (which is more stable) is used to estimate the radius of curvature.
 
+The parameters to convert from pixels to meters where provided by Udacity and are based on the assumption that 
+the lane is about 30 meters long and 3.7 meters wide.
+
 ```python
-    def find_curvature(yvals, fitx ):
+    def get_curvature(y, fitx):
+
         # Define y-value where we want radius of curvature
         # I'll choose the maximum y-value, corresponding to the bottom of the image
-        y_eval = np.max(yvals)
+        y_eval = np.max(y)
         # Define conversions in x and y from pixels space to meters
+        # assume the lane is about 30 meters long and 3.7 meters wide
         ym_per_pix = 30/720 # meters per pixel in y dimension
         xm_per_pix = 3.7/700 # meteres per pixel in x dimension
-        fit_cr = np.polyfit(yvals*ym_per_pix, fitx*xm_per_pix, 2)
-        curverad = ((1 + (2*fit_cr[0]*y_eval + fit_cr[1])**2)**1.5) \
-                                     /np.absolute(2*fit_cr[0])
+
+        fit_cr = np.polyfit(y * ym_per_pix, fitx * xm_per_pix, 2)
+        curverad = ((1 + (2*fit_cr[0]*y_eval + fit_cr[1])**2)**1.5) / np.absolute(2*fit_cr[0])
         return curverad
 
-    def find_position(pts, image_shape = (720, 1280)):
-        # Find the position of the car from the center
-        # It will show if the car is 'x' meters from the left or right
+    def get_position(pts, image_shape = (720, 1280)):
 
+        # Find the position of the car from the center
+        
         position = image_shape[1]/2
         left  = np.min(pts[(pts[:,1] < position) & (pts[:,0] > 700)][:,1])
         right = np.max(pts[(pts[:,1] > position) & (pts[:,0] > 700)][:,1])
         center = (left + right)/2
-        # Define conversions in x and y from pixels space to meters
+
+        # Define conversions in x and y from pixels space to meters,
+        # assume the lane is about 30 meters long and 3.7 meters wide
         xm_per_pix = 3.7/700 # meters per pixel in x dimension
         return (position - center)*xm_per_pix
 ```
@@ -146,14 +153,11 @@ fit for the left lane (which is more stable) is used to estimate the radius of c
 
 ## Discussion
 
-The particular challenge in this video is to detect the right lane, since it is a striped line, while the left lane 
+The particular challenge in this video is to detect and fit the right lane (since it is a striped line) while the left lane 
 is more or less detected accurately. As a result the right lane appears to wiggle much more than the left one and sometimes shows the wrong curvature.
-For this reason, I only used the left lane to calculate the curvature. 
-
 
 It should be possible to use the fact that the lanes must be parallel to ensure a more robust procedure when 
 fitting the lane polynomials, and use the left lane fit as a prior for the right lane.
 
-
-Finally, the segmentation procedure which is used here is not very robust in terms of lightning conditions and it is possible to use other techniques 
-such as neural newtworks to detect the pixels corresponding to image lanes in a more robust fashion.
+Finally, the segmentation procedure which is used here is not very robust in terms of lightning conditions (as it appear when the car is driving in the shade)
+and it is possible to implement more advanced techniques based on machine learning to segment the lanes.
