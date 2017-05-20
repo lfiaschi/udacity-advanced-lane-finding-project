@@ -27,7 +27,7 @@ with the fitted parameters
 - The results of the project is the video `output.mp4` which can be obtained by running the ipython notebook `Project Submission.ipynb`
 
 
-[![Demo CountPages alpha](./ouput.gif)]
+![Output Gif](output.gif)
 
 [//]: # (Image References)
 
