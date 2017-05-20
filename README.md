@@ -113,7 +113,8 @@ The result for this step on the test images are
 
 #### 5. Radius of curvature and car positioning:
 
-Radius of curvature and car positioning are estimated in the functions `find_curvature` and `find_position`:
+Radius of curvature and car positioning are estimated in the functions `find_curvature` and `find_position`, only the
+fit for the left lane (which is more stable) is used to estimate the radius of curvature.
 
 ```python
     def find_curvature(yvals, fitx ):
