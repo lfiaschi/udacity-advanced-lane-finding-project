@@ -1,13 +1,8 @@
-## Writeup Template
 
-### You can use this file as a template for your writeup if you want to submit it as a markdown file, but feel free to use some other method and submit a pdf if you prefer.
+# Advanced Lane Finding Project 
 
----
-
-**Advanced Lane Finding Project**
-
-The goals of this project is to provide an method to reliably detect lanes in a video.
-The techniques used in this project include:
+The goal of this project is to provide an method to reliably detect traffic lanes in a video of a driving car.
+The techniques used in this project are:
 
 1. Compute the camera calibration matrix and distortion coefficients given a set of chessboard images.
 2. Apply a distortion correction to raw images.
@@ -22,7 +17,7 @@ The code is organized as follows:
 
 - To camera parameters were produced with the notebook  `Camera Calibration.ipynb`  which saves a pickle `calibration.p` 
 with the fitted parameters
-- The code for the segmentation and lane fitting pipeline is organized in the library `carnd_lane_pipeline`. 
+- The code for the segmentation and lane fitting pipeline is organized in the library `carnd_lane_pipeline.py`. 
   In this  library the class `LaneFinder` takes care of the fit and the image processing for each frame of the video.
 - The results of the project is the video `output.mp4` which can be obtained by running the ipython notebook `Project Submission.ipynb`
 
@@ -38,7 +33,7 @@ with the fitted parameters
 [image4]: output_images/lane_finder.png "Undistorted"
 
 
-### Camera Calibration
+## Camera Calibration
 The code for this step is contained in the notebook `Camera Calibration.ipynb`  
 
 I start by preparing "object points", which will be the (x, y, z) coordinates of the chessboard corners in the world. Here I am assuming the chessboard is fixed on the (x, y) plane at z=0, such that the object points are the same for each calibration image.  Thus, `objp` is just a replicated array of coordinates, and `objpoints` will be appended with a copy of it every time I successfully detect all chessboard corners in a test image.  `imgpoints` will be appended with the (x, y) pixel position of each of the corners in the image plane with each successful chessboard detection.  
@@ -47,7 +42,7 @@ I then used the output `objpoints` and `imgpoints` to compute the camera calibra
 
 ![alt text][image0]
 
-### Pipeline (single images)
+## Pipeline:
 
 The image pipeline is applied in the notebook `Project Submission.ipynb` and the function `process_image` of the class `LaneFitter`
 
@@ -118,7 +113,7 @@ The result for this step on the test images are
 
 ---
 
-### Discussion
+## Discussion
 
 The particular challenge in this video is to detect the right lane, since it is a striped line, while the left lane is more or less detected accurately.
 As a result the right lane appears to wiggle much more than the left one and sometimes shows the wrong curvature.
